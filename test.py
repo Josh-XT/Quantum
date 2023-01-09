@@ -31,7 +31,7 @@ def get_quantum_computer(qubits=2, simulation=False):
             print(f"No Quantum Computers available with {qubits} qubits, using simulator")
     if simulation == True or quantum_comp is None: # Execute the circuit on the simulator
         quantum_comp = Aer.get_backend('qasm_simulator')
-    print(f"Using Quantum Computer: {quantum_comp.name()}")
+    print(f"Using Quantum Computer: {quantum_comp.name()} with {quantum_comp.status().pending_jobs} queued jobs")
     return quantum_comp
 
 # Create a Quantum Register with 2 qubits.
@@ -40,11 +40,13 @@ qr = QuantumRegister(2)
 cr = ClassicalRegister(2)
 # Create a Quantum Circuit
 circuit = QuantumCircuit(qr, cr)
+# Get a quantum computer with at least the number of selected qubits for the circuit
+qc = get_quantum_computer(qubits=circuit.num_qubits, simulation=False)
+# Build the circuit
 circuit.h(qr[0])
 circuit.cx(qr[0], qr[1])
 circuit.measure(qr, cr)
 circuit.draw()
-
-qc = get_quantum_computer(qubits=circuit.num_qubits, simulation=False)
+print(f"Executing circuit on {qc.name()} with {qc.status().pending_jobs} queued jobs")
 result = execute(circuit, backend=qc, shots=20).result()
 plot_histogram(result.get_counts(circuit))
