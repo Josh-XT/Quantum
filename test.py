@@ -8,7 +8,7 @@ IBM_TOKEN = os.getenv('IBM_TOKEN')
 IBMQ.save_account(IBM_TOKEN)
 
 IBMQ.load_account()
-provider = IBMQ.get_provider(hub='ibm-q')
+
 
 # Create a Quantum Register with 2 qubits.
 qr = QuantumRegister(2)
@@ -30,9 +30,10 @@ simulator = Aer.get_backend('qasm_simulator')
 result = execute(circuit, backend = simulator, shots=1024).result()
 plot_histogram(result.get_counts(circuit))
 circuit.draw()
+
 # Execute the circuit on a real device backend
-backend = provider.get_backend('ibmq_16_melbourne')
-job = execute(circuit, backend, shots=1024)
-result = job.result()
-counts = result.get_counts(circuit)
-print(counts)
+provider = IBMQ.get_provider(hub='ibm-q')
+backend = provider.get_backend('ibmq_lima')
+result = execute(circuit, backend, shots=1024).result()
+plot_histogram(result.get_counts(circuit))
+circuit.draw()
