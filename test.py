@@ -74,6 +74,25 @@ def bell_state_circuit(quantum_circuit, quantum_register, classical_register):
     drawing = quantum_circuit.draw()
     return quantum_circuit, drawing
 
+def define_info():
+    # First I need to measure something to determine what item to select from the list
+    # I will use a quantum computer to do this
+    # I will use a Bell State circuit to determine the item to select
+    # Set up the circuit
+    quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=2, classical_bits=2, simulation=False, verbose=True)
+    # Build a Bell State circuit
+    quantum_circuit = bell_state_circuit(quantum_circuit, quantum_register, classical_register)
+    highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=500, verbose=True)
+    match highest_probable:
+        case '00':
+            print("Select the first item")
+        case '01':
+            print("Select the second item")
+        case '10':
+            print("Select the third item")
+        case '11':
+            
+
 # Set up the circuit
 quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=2, classical_bits=2, simulation=False, verbose=True)
 # Build a Bell State circuit
