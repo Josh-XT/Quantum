@@ -1,4 +1,5 @@
 import os
+import random
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute, Aer, IBMQ
 from qiskit.tools.visualization import plot_histogram
 from dotenv import load_dotenv
@@ -74,33 +75,60 @@ def bell_state_circuit(quantum_circuit, quantum_register, classical_register):
     drawing = quantum_circuit.draw()
     return quantum_circuit, drawing
 
-def define_info():
-    # First I need to measure something to determine what item to select from the list
-    # I will use a quantum computer to do this
-    # I will use a Bell State circuit to determine the item to select
-    # Set up the circuit
-    quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=2, classical_bits=2, simulation=False, verbose=True)
-    # Build a Bell State circuit
-    quantum_circuit = bell_state_circuit(quantum_circuit, quantum_register, classical_register)
+def brute_force_circuit(quantum_circuit, quantum_register, classical_register):
+    # Build a brute force circuit using 3 qubits
+    # https://en.wikipedia.org/wiki/Quantum_logic_gate#Quantum_logic_gates
+    quantum_circuit.h(quantum_register[0])
+    quantum_circuit.x(quantum_register[1])
+    quantum_circuit.cx(quantum_register[0], quantum_register[1])
+    quantum_circuit.h(quantum_register[2])
+    quantum_circuit.cx(quantum_register[1], quantum_register[2])
+    quantum_circuit.measure(quantum_register, classical_register)
+    drawing = quantum_circuit.draw()
+    return quantum_circuit, drawing
+
+def iterate_words(words, shots=500, verbose=False):
+    new_words = {}
+    for word in words:
+        quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=3, classical_bits=3, simulation=True, verbose=True)
+        quantum_circuit, drawing = brute_force_circuit(quantum_circuit, quantum_register, classical_register)
+        highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=shots, verbose=True)
+        
+        if highest_probable not in new_words:
+            new_words[highest_probable] = word
+        else:
+            # I didn't like that answer, try again with less shots!
+            if shots > 1:
+                shots = int(shots/2)
+            else:
+                # We have exhausted our options, the gods have willed that this is not an option.
+                continue
+            new_words = iterate_words(words, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=shots, verbose=verbose)
+    return new_words
+
+
+def brute_force(words, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=500, verbose=False):
+    # Lets do something silly.  Lets brute force a password if there are only 8 possible passwords.
+    # We could wrap this in a function and pass in a dictionary then make this roll a probability for each, but we will just use a list for now.
+    # There is no way this can be accurate, but it is fun to see the results.
+    # Start by shuffling the list of words so that they're essentially in super position until observed below.
+    random.shuffle(words)
+    quantum_circuit, drawing = brute_force_circuit(quantum_circuit, quantum_register, classical_register)
     highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=500, verbose=True)
-    match highest_probable:
-        case '00':
-            print("Select the first item")
-        case '01':
-            print("Select the second item")
-        case '10':
-            print("Select the third item")
-        case '11':
-            
+    probabilities = {}
+    for item in counts.keys():
+        probability = 100 * float(counts[item])/float(500)
+        for word in words:
+            if word not in probabilities.keys():
+                probabilities[word] = f"{probability}%"
+    return probabilities, drawing, highest_probable, result, counts
 
 # Set up the circuit
-quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=2, classical_bits=2, simulation=False, verbose=True)
-# Build a Bell State circuit
-quantum_circuit, drawing = bell_state_circuit(quantum_circuit, quantum_register, classical_register)
+quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=3, classical_bits=3, simulation=False, verbose=True)
+# Run a brute force on the words list
+words = ["password1", "password2", "password3", "password4", "password5", "password6", "password7", "password8"]
+probabilities, drawing, highest_probable, result, counts = brute_force(words, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=500, verbose=True)
 drawing
 
-# Execute the circuit
-highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=500, verbose=True)
-
 # Plot the results
-plot_histogram(counts)
+plot_histogram(probabilities)
