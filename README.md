@@ -23,3 +23,5 @@ Install the ``Jupyter`` extension for VSCode
 ## Try it out
 
 Open ``qk.ipynb`` in VSCode, run each step from top to bottom to see outputs.
+
+It can also be opened [on GitHub here](https://github.com/Josh-XT/Quantum/blob/main/qk.ipynb) to view the Jupyter Notebook with outputs.
