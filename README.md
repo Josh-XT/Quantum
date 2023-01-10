@@ -1,4 +1,4 @@
-# Quantum
+# Tests for learning Quantum Computer Programming with Python and Qiskit
 
 ## Create or log in to IBM account
 Go to https://quantum-computing.ibm.com/ log in with GitHub account, click the user icon in the top right, then ``Account Settings``, then copy the API token.
