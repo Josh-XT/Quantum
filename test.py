@@ -186,7 +186,7 @@ def alethiometer(statement):
     quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=qubits, classical_bits=1, simulation=False, verbose=True)
     quantum_circuit, drawing = deutsch_jozsa_circuit(f, n, quantum_circuit, quantum_register, classical_register, quantum_computer)
     highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=8192, verbose=True)
-    if '1' in highest_probable:
+    if '0' in highest_probable:
         answer = True
     else:
         answer = False
