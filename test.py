@@ -11,10 +11,14 @@ IBM_TOKEN = os.getenv('IBM_TOKEN')
 IBMQ.delete_account()
 IBMQ.save_account(IBM_TOKEN)
 IBMQ.load_account()
+max_qubits = 7
 
 # Define functions to simplify interactions with quantum computers
 def get_quantum_computer(qubits=2, simulation=False, verbose=False):
     quantum_computer = None
+    if qubits > max_qubits:
+        print(f"No Quantum Computers available with {qubits} qubits.")
+        simulation = True
     # Finds a quantum computer at IBM with the lowest queue as long as it has enough qubits for the circuit
     if simulation == False: # Execute the circuit on a quantum computer at IBM
         lowest = float('inf')
