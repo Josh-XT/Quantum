@@ -132,9 +132,8 @@ def brute_force(words, quantum_circuit, quantum_register, classical_register, qu
 
     return probabilities, drawing, highest_probable, result, counts
 
-def shors_circuit(N, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=500, verbose=False):
+def shors_circuit(quantum_circuit, quantum_register, classical_register):
     # The number we want to factorize
-    N = 39
     for j in range(len(quantum_register)):
         quantum_circuit.h(quantum_register[j])
         for k in range(j + 1, len(quantum_register)):
@@ -149,7 +148,7 @@ def factorize(N=39):
     bit_count = math.ceil(math.log(N, 2)) + 1
     # Set up the circuit
     quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=bit_count, classical_bits=bit_count, simulation=False, verbose=True)
-    quantum_circuit, drawing = shors_circuit(39, quantum_circuit, quantum_register, classical_register, quantum_computer)
+    quantum_circuit, drawing = shors_circuit(quantum_circuit, quantum_register, classical_register)
     highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=8192, verbose=True)
     
     return highest_probable, result, counts, drawing
