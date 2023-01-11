@@ -1,5 +1,7 @@
 import os
 import random
+import numpy as np
+import math
 from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute, Aer, IBMQ
 from qiskit.tools.visualization import plot_histogram
 from dotenv import load_dotenv
@@ -12,6 +14,7 @@ IBMQ.load_account()
 
 # Define functions to simplify interactions with quantum computers
 def get_quantum_computer(qubits=2, simulation=False, verbose=False):
+    quantum_computer = None
     # Finds a quantum computer at IBM with the lowest queue as long as it has enough qubits for the circuit
     if simulation == False: # Execute the circuit on a quantum computer at IBM
         lowest = float('inf')
@@ -33,7 +36,8 @@ def get_quantum_computer(qubits=2, simulation=False, verbose=False):
             except:
                 print(f"Quantum Computer {backend.name()} is not operational")
         if quantum_computer is None:
-            print(f"No Quantum Computers available with {qubits} qubits, using simulator")
+            print(f"No Quantum Computers available with {qubits} qubits.")
+            simulation = True
     if simulation == True or quantum_computer is None: # Execute the circuit on the simulator
         quantum_computer = Aer.get_backend('qasm_simulator')
         if verbose == True:
@@ -106,29 +110,85 @@ def iterate_words(words, shots=500, verbose=False):
             new_words = iterate_words(words, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=shots, verbose=verbose)
     return new_words
 
-
 def brute_force(words, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=500, verbose=False):
     # Lets do something silly.  Lets brute force a password if there are only 8 possible passwords.
     # We could wrap this in a function and pass in a dictionary then make this roll a probability for each, but we will just use a list for now.
     # There is no way this can be accurate, but it is fun to see the results.
-    # Start by shuffling the list of words so that they're essentially in super position until observed below.
-    random.shuffle(words)
+    # Shuffle the list of words so that they're essentially in super position until observed below.
     quantum_circuit, drawing = brute_force_circuit(quantum_circuit, quantum_register, classical_register)
-    highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=500, verbose=True)
+    highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=shots, verbose=True)
+    random.shuffle(words)
     probabilities = {}
-    for item in counts.keys():
-        probability = 100 * float(counts[item])/float(500)
+    # This isn't working below - I need to find a way to match a word randomly to each result and then calculate the probability of each word.
+    for key, value in counts.items():
         for word in words:
             if word not in probabilities.keys():
+                probability = 100 * float(value)/float(shots)
                 probabilities[word] = f"{probability}%"
+
     return probabilities, drawing, highest_probable, result, counts
 
-# Set up the circuit
-quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=3, classical_bits=3, simulation=False, verbose=True)
-# Run a brute force on the words list
-words = ["password1", "password2", "password3", "password4", "password5", "password6", "password7", "password8"]
-probabilities, drawing, highest_probable, result, counts = brute_force(words, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=500, verbose=True)
-drawing
+def shors_circuit(N, quantum_circuit, quantum_register, classical_register, quantum_computer, shots=500, verbose=False):
+    # The number we want to factorize
+    N = 39
+    for j in range(len(quantum_register)):
+        quantum_circuit.h(quantum_register[j])
+        for k in range(j + 1, len(quantum_register)):
+            quantum_circuit.cp(math.pi / float(2 ** (k - j)), quantum_register[k], quantum_register[j])
+        quantum_circuit.measure(quantum_register[j], classical_register[j])
+    drawing = quantum_circuit.draw()
+    return quantum_circuit, drawing
 
-# Plot the results
-plot_histogram(probabilities)
+def factorize(N=39):
+    # We want to find factors of 39, so set N to 39
+    # We need to know how many bits we need to represent N
+    bit_count = math.ceil(math.log(N, 2)) + 1
+    # Set up the circuit
+    quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=bit_count, classical_bits=bit_count, simulation=False, verbose=True)
+    quantum_circuit, drawing = shors_circuit(39, quantum_circuit, quantum_register, classical_register, quantum_computer)
+    highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=8192, verbose=True)
+    
+    return highest_probable, result, counts, drawing
+
+def deutsch_jozsa_circuit(f, n, quantum_circuit, quantum_register, classical_register, quantum_computer):
+    """
+    Uses the Deutsch-Jozsa algorithm to determine whether a given Boolean function f on n qubits is
+    constant (returns always 0 or always 1) or balanced (returns 0 and 1 with equal probability)
+    """    
+    # Prepare the input qubits in the |+> state
+    for i in range(n):
+        quantum_circuit.h(i)
+    # Oracle that evaluates the given Boolean function f on n qubits
+    for i in range(n):
+        if f[i] == '1':
+            quantum_circuit.x(i)
+    quantum_circuit.cx(0, n)
+    for i in range(n):
+        if f[i] == '1':
+            quantum_circuit.x(i)
+
+    # Apply Hadamard gate again
+    for i in range(n):
+        quantum_circuit.h(i)
+    # Measure the output
+    quantum_circuit.measure(quantum_register[0], classical_register[0])
+    drawing = quantum_circuit.draw()
+    return quantum_circuit, drawing
+
+def alethiometer(statement):
+    # I thought it would be fun to make a quantum alethiometer.
+    # https://en.wikipedia.org/wiki/Alethiometer
+    # It is just a joke, but it is fun to see how it works.
+    # We also don't even have enough qubits available to convert a single letter to binary, so it will only run on the simulator.
+    f = ''.join(format(ord(x), 'b') for x in statement)
+    n = len(f)
+    qubits = n+1
+    quantum_circuit, quantum_register, classical_register, quantum_computer = prepare_quantum_circuit(qubits=qubits, classical_bits=1, simulation=False, verbose=True)
+    quantum_circuit, drawing = deutsch_jozsa_circuit(f, n, quantum_circuit, quantum_register, classical_register, quantum_computer)
+    highest_probable, result, counts = execute_quantum_circuit(quantum_circuit, quantum_computer, shots=8192, verbose=True)
+    if '1' in highest_probable:
+        answer = True
+    else:
+        answer = False
+    print(f"Your statement '{statement}' is {answer}.")
+    return answer
