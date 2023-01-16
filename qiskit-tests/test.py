@@ -6,7 +6,7 @@ from qiskit import QuantumRegister, ClassicalRegister, QuantumCircuit, execute, 
 from qiskit.tools.visualization import plot_histogram
 from dotenv import load_dotenv
 # Load the API key from the .env file
-load_dotenv()
+load_dotenv("../.env")
 IBM_TOKEN = os.getenv('IBM_TOKEN')
 IBMQ.delete_account()
 IBMQ.save_account(IBM_TOKEN)

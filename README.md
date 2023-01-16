@@ -22,6 +22,6 @@ Install the ``Jupyter`` extension for VSCode
 
 ## Try it out
 
-Open ``qk.ipynb`` in VSCode, run each step from top to bottom to see outputs.
+For Qiskit, Open ``qk.ipynb`` in VSCode from the ``qiskit-tests`` folder, run each step from top to bottom to see outputs.
 
 It can also be viewed in the browser by [clicking here.](https://github.com/Josh-XT/Quantum/blob/main/qk.ipynb)
