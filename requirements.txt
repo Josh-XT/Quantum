@@ -1,3 +1,7 @@
 qiskit
+cirq
+boto3
+pennylane
+pyquil
 jupyter
 python-dotenv
