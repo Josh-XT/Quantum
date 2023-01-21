@@ -5,3 +5,5 @@ pennylane
 pyquil
 jupyter
 python-dotenv
+amazon-braket-sdk
+qiskit_braket_provider
