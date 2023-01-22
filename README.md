@@ -34,7 +34,7 @@ Run the following in the terminal:
 pip install --upgrade -r requirements.txt
 ```
 
-Install the ``Jupyter`` extension for VSCode
+Install the ``Jupyter`` extension for ``Visual Studio Code``, or use whichever ``Jupyter Notebook`` editor you choose.
 
 ## Try it out
 
